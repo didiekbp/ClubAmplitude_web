@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Club Amplitude – Seismic modeling</title>
+<style>
+:root{color-scheme:light dark;--ink:#142a40;--bg:#eaf1f8;--panel:rgba(255,255,255,.66);--panel-strong:rgba(255,255,255,.84);--surface-soft:rgba(232,240,249,.62);--field-bg:rgba(249,252,255,.82);--line:rgba(255,255,255,.82);--mut:#425b73;--gas:#d52c3b;--oil:#258442;--wet:#1f5fe0;--shale:#68798b;--button-bg:#173a5c;--button-ink:#fff;--focus-ring:#145bd7;--layer-outline:#142a40;--ambient-a:rgba(31,95,224,.13);--ambient-b:rgba(35,155,168,.12);--shadow-soft:0 16px 38px rgba(32,56,86,.12);--shadow-hover:0 20px 44px rgba(32,56,86,.18);--shadow-header:0 8px 26px rgba(24,45,68,.08);--shadow-accent:0 5px 14px rgba(31,95,224,.18);--blur-amount:15px;--radius-md:14px;--radius-sm:10px}
+@media (prefers-color-scheme:dark){:root{color-scheme:dark;--ink:#e4edf7;--bg:#081220;--panel:rgba(19,31,49,.78);--panel-strong:rgba(24,39,59,.9);--surface-soft:rgba(27,44,66,.72);--field-bg:rgba(10,20,34,.72);--line:rgba(177,196,219,.22);--mut:#b1c2d5;--gas:#ff737a;--oil:#4fd18b;--wet:#75a7ff;--shale:#bac8d6;--button-bg:#dbe9fb;--button-ink:#10263d;--focus-ring:#9bc1ff;--layer-outline:#e4edf7;--ambient-a:rgba(41,104,224,.2);--ambient-b:rgba(20,155,153,.13);--shadow-soft:0 18px 42px rgba(0,0,0,.28);--shadow-hover:0 22px 48px rgba(0,0,0,.38);--shadow-header:0 8px 26px rgba(0,0,0,.22);--shadow-accent:0 5px 14px rgba(83,139,239,.28)}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "Segoe UI",system-ui,sans-serif;font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:24px;padding:10px 24px;border-bottom:2px solid var(--gas);background:var(--panel);flex-wrap:wrap}
+h1{font-size:19px;margin:0;font-weight:650}nav{display:flex;gap:4px}
+.header-logo{width:150px;height:68px;object-fit:contain;margin-left:auto}
+nav button{border:1px solid var(--line);background:none;color:inherit;padding:6px 14px;font:inherit;cursor:pointer;border-radius:4px 4px 0 0}
+nav button[aria-selected=true]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--wet);outline-offset:1px}
+main{padding:16px 24px;max-width:1400px;margin:auto}section[hidden]{display:none}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:12px 14px}
+.panel h2{font-size:14px;margin:0 0 8px;font-weight:650}
+label{display:grid;grid-template-columns:1fr 90px 44px;gap:6px;align-items:center;margin:3px 0;color:var(--mut)}
+label u{text-decoration:none;font-size:12px}
+input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:3px 6px;width:100%}
+.btn{border:1px solid var(--ink);background:var(--ink);color:var(--panel);padding:6px 12px;border-radius:4px;cursor:pointer;font:inherit}
+.btn.alt{background:none;color:var(--ink)}.row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+table{border-collapse:collapse;width:100%}th,td{padding:4px 8px;text-align:right;border-bottom:1px solid var(--line)}th:first-child,td:first-child{text-align:left}
+canvas{width:100%;display:block}.sw{display:inline-block;width:11px;height:11px;border-radius:2px;margin-right:6px;vertical-align:-1px}
+.comparison-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.compare-panel,.compare-section{min-width:0;border:1px solid var(--line);border-radius:4px;padding:10px 14px}
+.compare-panel{background:var(--panel);padding:8px 14px 14px}
+.compare-panel>legend{font-size:18px;font-weight:650;text-align:center;padding:0 10px}
+.compare-section{margin:8px 0 0}
+.compare-section>legend{font-size:14px;font-weight:650;padding:0 6px}
+.fluid-constants{margin-top:8px}
+.fluid-constants>div,.result-list>div,.fluid-mirror{display:grid;grid-template-columns:minmax(0,1fr) 90px 44px;gap:6px;align-items:center;margin:3px 0}
+.fluid-constants output,.result-list output,.fluid-mirror output{text-align:right;background:var(--bg);border:1px solid var(--line);border-radius:3px;padding:3px 6px;min-height:27px}
+.fluid-constants small,.result-list small,.fluid-mirror small{font-size:12px}
+.result-list label{display:block}
+.sat-bar{display:flex;height:22px;margin:6px 0 0 0;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+.sat-bar span{display:block;transition:width .15s ease}
+.sat-water{background:var(--wet)}.initial-fluid .sat-hc{background:var(--oil)}.modeled-fluid .sat-hc{background:var(--gas)}
+.sat-label{display:flex;justify-content:space-around;color:var(--ink);font-size:12px;font-weight:650;margin-bottom:5px}
+.rock-color{display:inline-block;width:26px;height:26px;border:1px solid var(--line);border-radius:2px;vertical-align:middle}
+.fluid-actions{margin-top:12px}
+.upper-settings{margin:12px 0;padding:10px 14px;background:var(--panel);border:1px solid var(--line);border-radius:4px}
+.upper-settings summary{font-weight:650;cursor:pointer}
+.fluid-results{margin-top:14px;grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:760px){.comparison-grid,.fluid-results{grid-template-columns:1fr}}
+.lyr{display:grid;grid-template-columns:1fr 70px 28px 28px 28px;gap:4px;margin:3px 0}.lyr button{padding:0;cursor:pointer}
+.fac{display:grid;grid-template-columns:70px 28px 1fr 1fr 1fr;gap:4px;margin:3px 0;align-items:center}.fac b{min-width:0;overflow-wrap:anywhere}.fac input[type=color]{padding:0;height:26px}
+.fac-add{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:6px;align-items:end;margin:8px 0 12px}
+.fac-add label{display:block;margin:0;font-size:12px}.fac-add input{display:block;margin-top:3px}
+.fac-add button{min-height:31px}
+.model-layout{display:grid;grid-template-columns:minmax(320px, .92fr) minmax(0, 1.25fr);gap:14px;align-items:start}
+.model-panel{min-width:0;background:var(--surface-soft);border:1px solid var(--line);border-radius:4px;padding:12px}
+.model-actions,.layer-toolbar,.model-tabs{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.model-actions{margin-bottom:12px}
+.model-actions .btn,.layer-toolbar .btn,.model-tabs button{min-height:34px}
+.model-actions label{display:flex;align-items:center;gap:6px;margin:0;color:var(--ink)}
+.facies-list{min-height:300px;max-height:52vh;overflow:auto;background:var(--panel);border:1px solid var(--line);padding:4px}
+.fac-header{display:grid;grid-template-columns:minmax(60px,1fr) 50px repeat(3,minmax(50px,.7fr)) 28px;gap:4px;padding:4px;font-size:12px;font-weight:650}
+.fac{grid-template-columns:minmax(60px,1fr) 50px repeat(3,minmax(50px,.7fr)) 28px}
+.fac input{min-width:0}
+.fac-remove{padding:0!important;min-height:26px}
+.model-actions select{width:auto;min-width:135px}
+.fac-add{grid-template-columns:repeat(3,minmax(75px,1fr))}
+.fac-add label:first-child{grid-column:span 2}
+.fac-add button{grid-column:1/-1}
+.model-output{min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:10px}
+.layer-toolbar{justify-content:center;margin:0 0 8px;padding:8px;background:var(--surface-soft);border:1px solid var(--line);border-radius:4px}
+.layer-toolbar label{display:flex;grid-template-columns:none;margin:0;align-items:center;color:var(--ink);gap:6px}
+.layer-toolbar .show-layer-box input{width:auto}
+.layer-toolbar select{width:auto;min-width:180px}
+.layer-toolbar input[type=number]{width:70px}
+.layer-toolbar .move-layer{font-size:18px;padding:0 8px}
+.model-output canvas{height:620px}
+.layer-avo{margin:8px 0;padding:8px;border:1px solid var(--line);border-radius:4px;background:var(--panel)}
+.layer-avo h2{margin:0 0 4px;font-size:14px}
+.avo-legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--mut)}
+.avo-legend span{display:inline-flex;align-items:center;gap:5px}
+.avo-swatch{display:inline-block;width:14px;height:3px;background:var(--wet)}
+.avo-swatch.base{background:var(--gas)}
+.avo-readout{min-height:20px;margin-top:3px;font-size:12px;font-variant-numeric:tabular-nums}
+.model-output #layerAvo{height:230px}
+.model-tabs{padding:8px 4px 0;border-top:1px solid var(--line);margin-top:8px}
+.model-tabs button[aria-selected=true]{background:var(--ink);color:var(--panel)}
+.model-settings{min-height:85px;padding:8px 4px}
+.model-settings[hidden]{display:none}
+.model-settings label{max-width:320px}
+.wavelet-layout{display:grid;grid-template-columns:minmax(230px,1fr) minmax(180px,.8fr);gap:12px;align-items:start}
+.wavelet-controls{min-width:0}
+.wavelet-controls label{max-width:none}
+.wavelet-plot{min-width:0}
+.wavelet-positive-key{display:flex;align-items:center;gap:5px}
+.wavelet-positive-key i{display:inline-block;width:11px;height:11px;background:var(--gas);border-radius:2px}
+#waveletPreview{height:120px;margin-top:6px}
+.overburden-table-scroll{overflow-x:auto}
+.overburden-table-scroll table{min-width:720px}
+.model-settings .ob-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 12px}
+.model-settings .ob-grid label{grid-template-columns:1fr 90px 44px}
+.model-settings .model-check{display:flex;align-items:center;gap:8px}
+.model-settings .model-check input{width:auto}
+@media(max-width:900px){.model-layout{grid-template-columns:1fr}.facies-list{max-height:none;min-height:0}.model-output canvas{height:500px}}
+@media(max-width:560px){header{gap:10px;padding:10px 14px}header h1{font-size:17px}header nav{order:3;flex-basis:100%}.header-logo{width:115px;height:52px}.wavelet-layout{grid-template-columns:1fr}}
+small{color:var(--mut)}
+body{min-height:100vh;background:radial-gradient(ellipse at 10% 0%,var(--ambient-a),transparent 38%),radial-gradient(ellipse at 92% 10%,var(--ambient-b),transparent 34%),var(--bg);background-attachment:fixed}
+header{border-bottom:1px solid var(--line);box-shadow:var(--shadow-header);backdrop-filter:blur(var(--blur-amount));-webkit-backdrop-filter:blur(var(--blur-amount))}
+.panel,.compare-panel,.compare-section,.upper-settings,.model-panel,.model-output,.layer-avo{background:var(--panel);border-color:var(--line);border-radius:var(--radius-md);box-shadow:var(--shadow-soft);backdrop-filter:blur(var(--blur-amount));-webkit-backdrop-filter:blur(var(--blur-amount))}
+.compare-section,.layer-avo{background:var(--panel-strong)}
+.model-panel,.layer-toolbar{background:var(--surface-soft)}
+.facies-list{background:var(--panel-strong);border-color:var(--line);border-radius:var(--radius-sm)}
+nav button,.btn,input,select,.fluid-constants output,.result-list output,.fluid-mirror output{border-radius:var(--radius-sm)}
+nav button{min-height:38px;transition:background-color .16s ease,border-color .16s ease,color .16s ease,transform .16s ease}
+nav button:hover,.btn:hover{transform:translateY(-1px)}
+nav button[aria-selected=true],.model-tabs button[aria-selected=true]{background:var(--button-bg);color:var(--button-ink);border-color:transparent;box-shadow:var(--shadow-accent)}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid var(--focus-ring);outline-offset:2px}
+input,select{min-height:36px;background:var(--field-bg);border-color:var(--line)}
+input[type=checkbox]{accent-color:var(--wet)}
+input[type=color]{min-height:36px}
+.btn{min-height:38px;border-color:transparent;background:var(--button-bg);color:var(--button-ink);box-shadow:var(--shadow-accent);transition:background-color .16s ease,border-color .16s ease,box-shadow .16s ease,transform .16s ease}
+.btn:hover{box-shadow:var(--shadow-hover)}
+.btn.alt{background:var(--panel-strong);color:var(--ink);border-color:var(--line);box-shadow:none}
+.btn.alt:hover{background:var(--surface-soft);box-shadow:var(--shadow-soft)}
+.fluid-constants output,.result-list output,.fluid-mirror output{background:var(--field-bg);border-color:var(--line)}
+table{border-collapse:separate;border-spacing:0;overflow:hidden;border:1px solid var(--line);border-radius:var(--radius-sm)}
+th{background:var(--surface-soft);font-weight:650}
+th,td{border-bottom:1px solid var(--line)}
+tr:last-child td{border-bottom:0}
+tbody tr:hover,table tr:hover td{background:var(--surface-soft)}
+.sat-label{color:var(--ink)}
+.initial-fluid .sat-hc{background:var(--oil)}
+.wavelet-positive-key i{box-shadow:0 0 0 3px color-mix(in srgb,var(--gas) 14%,transparent)}
+@media(max-width:560px){main{padding:12px}.comparison-grid,.fluid-results{gap:10px}.panel,.compare-panel,.model-output,.model-panel{padding:10px}.header-logo{margin-left:auto}}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important;animation-iteration-count:1!important}}
+</style></head><body>
+<header><h1>Club Amplitude · Seismic modeling</h1>
+<nav role="tablist"><button role="tab" aria-selected="true" data-t="fluid">Fluids and AVO</button><button role="tab" aria-selected="false" data-t="model">Layered model</button></nav>
+<img class="header-logo" src="pertamina-hulu-mahakam.png" alt="Pertamina Hulu Mahakam logo"></header>
+<main>
+<section id="fluid">
+ <div class="comparison-grid">
+  <fieldset class="compare-panel"><legend>Initial</legend>
+   <fieldset class="compare-section initial-fluid"><legend>Initial fluid</legend><div id="f0In"></div>
+    <div class="fluid-constants"><div><span>Water bulk-modulus</span><output id="waterK0">–</output><small>GPa</small></div><div><span>HC bulk-modulus</span><output id="hcK0">–</output><small>GPa</small></div><div><b>Fluid bulk-modulus</b><output id="fluidK0">–</output><small>GPa</small></div></div>
+   </fieldset>
+   <fieldset class="compare-section"><legend>Initial rock</legend><div id="rockIn"></div>
+    <div class="result-list">
+     <div><span>Rock bulk density</span><output id="initialRho">–</output><small>g/cc</small></div>
+     <div><span>Rock impedance</span><output id="initialIp">–</output><small></small></div>
+     <div><span>Poisson's ratio</span><output id="initialPr">–</output><small></small></div>
+     <div><span>Color</span><span><i id="initialColor" class="rock-color"></i></span><small></small></div>
+    </div>
+   </fieldset>
+  </fieldset>
+  <fieldset class="compare-panel"><legend>Modeling</legend>
+   <fieldset class="compare-section modeled-fluid"><legend>Modeled fluid</legend><div id="f1In"></div>
+    <div class="fluid-constants"><div><span>Water bulk-modulus</span><output id="waterK1">–</output><small>GPa</small></div><div><span>HC bulk-modulus</span><output id="hcK1">–</output><small>GPa</small></div><div><b>Fluid bulk-modulus</b><output id="fluidK1">–</output><small>GPa</small></div></div>
+   </fieldset>
+   <fieldset class="compare-section"><legend>Modeled rock</legend>
+    <div class="result-list">
+     <div><label for="modeledPhi" style="margin:0;color:inherit">Porosity</label><input id="modeledPhi" type="number" value="35" min="0.1" max="99.9" step="0.1" aria-label="Modeled porosity (%)"><small>%</small></div>
+     <div><span>Rock P-wave velocity</span><output id="modeledVp">–</output><small>m/s</small></div>
+     <div><span>Rock S-wave velocity</span><output id="modeledVs">–</output><small>m/s</small></div>
+     <div><span>Rock bulk density</span><output id="modeledRho">–</output><small>g/cc</small></div>
+     <div><span>Rock impedance</span><output id="modeledIp">–</output><small></small></div>
+     <div><span>Poisson's ratio</span><output id="modeledPr">–</output><small></small></div>
+     <div><span>Color</span><span><i id="modeledColor" class="rock-color"></i></span><small></small></div>
+    </div>
+   </fieldset>
+  </fieldset>
+ </div>
+ <details class="upper-settings"><summary>Reference upper layer (shale) for AVO calculations</summary><div id="upIn"></div></details>
+ <div class="row fluid-actions"><button class="btn" id="send">Send properties to layered model</button><button class="btn alt" id="exportFluid">Export CSV</button></div>
+ <div class="grid fluid-results">
+  <div class="panel"><h2>Lower layer</h2><div id="tbl"></div><h2 style="margin:14px 0 4px">Crossplot R10 / R30</h2><canvas id="cx" height="300" style="height:300px"></canvas></div>
+  <div class="panel"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;flex-wrap:wrap;gap:8px"><h2 style="margin:0">Reflectivity vs angle (exact Zoeppritz)</h2><label style="display:inline-flex;gap:5px;align-items:center;margin:0;font-size:12px;color:var(--ink);cursor:pointer;grid-template-columns:auto auto"><input type="checkbox" id="rcMod" style="width:auto"><u>Modulus |R|</u></label></div><canvas id="rc" height="380" style="height:380px"></canvas></div>
+ </div>
+</section>
+<section id="model" hidden>
+ <div class="model-layout">
+  <div class="model-panel">
+   <div class="model-actions"><label for="newLayerFacies">Facies<select id="newLayerFacies"></select></label><button class="btn alt" id="addL">Add layer</button><button class="btn alt" id="exportModel">Export CSV</button></div>
+   <h2>Types of facies</h2>
+   <div class="facies-list"><div class="fac-header"><span>Name</span><span>Color</span><span>ρ (g/cc)</span><span>Vp (m/s)</span><span>Vs (m/s)</span><span></span></div><div id="facies"></div></div>
+   <form id="addFaciesForm" class="fac-add">
+    <label for="newFaciesName">Name<input id="newFaciesName" type="text" maxlength="40" required></label>
+    <label for="newFaciesColor">Color<input id="newFaciesColor" type="color"></label>
+    <label for="newFaciesRho">ρ (g/cc)<input id="newFaciesRho" type="number" value="2.2" min="0.001" step="any" required></label>
+    <label for="newFaciesVp">Vp (m/s)<input id="newFaciesVp" type="number" value="2700" min="0.001" step="any" required></label>
+    <label for="newFaciesVs">Vs (m/s)<input id="newFaciesVs" type="number" value="1100" min="0.001" step="any" required></label>
+    <button class="btn alt" type="submit">Add facies</button>
+   </form>
+   <small id="faciesErr" role="alert" style="color:var(--gas)"></small>
+  </div>
+  <div class="model-output">
+   <div class="layer-toolbar">
+    <label for="modelLayer">Selected layer<select id="modelLayer"></select></label>
+    <label for="layerFacies">Facies<select id="layerFacies"></select></label>
+    <label for="layerThickness">Thickness<input id="layerThickness" type="number" value="50" min="1" step="any"><span>m</span></label>
+    <button class="btn alt move-layer" id="moveLayerUp" title="Move layer up" aria-label="Move layer up">↑</button>
+    <button class="btn alt move-layer" id="moveLayerDown" title="Move layer down" aria-label="Move layer down">↓</button>
+    <button class="btn alt" id="deleteLayer" title="Delete selected layer">Delete</button>
+    <label class="show-layer-box" for="showLayerBox"><input id="showLayerBox" type="checkbox" checked>Show selected-layer box</label>
+   </div>
+   <small id="freqErr" role="alert" style="color:var(--gas)"></small>
+   <canvas id="gt" height="500"></canvas>
+   <div class="layer-avo">
+    <h2 id="avoTitle">Layer AVO</h2>
+    <div class="avo-legend"><span><i class="avo-swatch"></i>Top of layer</span><span><i class="avo-swatch base"></i>Base of layer</span></div>
+    <div id="avoReadout" class="avo-readout" aria-live="polite">Select a layer in the log or gather to view its AVO response.</div>
+    <canvas id="layerAvo" height="230"></canvas>
+   </div>
+   <div id="offt"></div>
+   <div class="model-tabs" role="tablist" aria-label="Model settings">
+    <button class="btn alt" data-model-panel="scale" aria-selected="true">Scale</button>
+    <button class="btn alt" data-model-panel="wavelet" aria-selected="false">Wavelet</button>
+    <button class="btn alt" data-model-panel="overburden" aria-selected="false">Overburden</button>
+   </div>
+   <div class="model-settings" data-panel="scale">
+    <label for="windowSize">Maximum window size<input id="windowSize" type="number" value="400" min="10" max="10000" step="100"><u>ms</u></label>
+    <label for="modelProperty">Log scale<select id="modelProperty"><option value="ip">Ip</option><option value="is">Is</option><option value="vpvs">Vp/Vs</option></select></label>
+    <label>Gain<input id="gain" type="number" value="1" step=".5"><u>×</u></label>
+   </div>
+   <div class="model-settings" data-panel="wavelet" hidden>
+    <div class="wavelet-layout">
+     <div class="wavelet-controls">
+      <label>Ricker frequency<input id="freq" type="number" value="30" min="5" max="150" step="1" aria-describedby="freqErr"><u>Hz</u></label>
+      <label>Phase rotation<input id="phase" type="number" value="0" min="0" max="360" step="5"><u>°</u></label>
+      <div class="model-actions">
+       <label for="waveletFile">Import ASCII wavelet<input id="waveletFile" type="file" accept=".txt,.asc,.dat,.csv,text/plain" aria-describedby="waveletInfo waveletErr"></label>
+       <button class="btn alt" id="clearWavelet" type="button" disabled>Use generated Ricker</button>
+      </div>
+      <small id="waveletStatus">Generated Ricker wavelet.</small>
+      <small id="waveletErr" role="alert" style="color:var(--gas)"></small>
+      <small id="waveletInfo">ASCII: time (ms), amplitude columns or one amplitude per line at 1 ms. Two-column files are resampled to 1 ms. Phase rotation applies to imported and generated wavelets.</small>
+     </div>
+     <div class="wavelet-plot">
+      <small class="wavelet-positive-key"><i></i>Positive amplitude</small>
+      <canvas id="waveletPreview" height="120" aria-label="Wavelet amplitude versus time preview"></canvas>
+     </div>
+    </div>
+   </div>
+   <div class="model-settings" data-panel="overburden" hidden><label class="model-check">Enable overburden<input id="ob" type="checkbox"></label><div class="ob-grid" id="obRows"></div></div>
+  </div>
+ </div>
+</section>
+</main>
+<script src="app.js"></script></body></html>
