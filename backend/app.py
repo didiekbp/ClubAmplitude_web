@@ -5,11 +5,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-
-import sys
-from pathlib import Path
-sys.path.insert(0, str(Path(__file__).resolve().parent))
-import physics as ph
+from . import physics as ph
 
 app = FastAPI(title="Club Amplitude – fluid substitution, AVO and 1D modeling")
 ANGLES = np.arange(0, 61, 1.0)
@@ -103,4 +99,4 @@ def model(q: Stack):
             "wavelet": wavelet.tolist(),
             "wavelet_times": ((np.arange(len(wavelet)) - len(wavelet) // 2) * 0.001).tolist()}
 
-app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "public", html=True), name="ui")
+app.mount("/", StaticFiles(directory=Path(__file__).parent.parent / "frontend", html=True), name="ui")
