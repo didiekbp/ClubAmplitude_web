@@ -5,7 +5,7 @@ import numpy as np
 from fastapi import FastAPI, HTTPException
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
-from . import physics as ph
+import physics as ph
 
 app = FastAPI(title="Club Amplitude – fluid substitution, AVO and 1D modeling")
 ANGLES = np.arange(0, 61, 1.0)
